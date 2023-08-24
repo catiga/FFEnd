@@ -5,7 +5,8 @@
 
 echo set sytem env
 set GOOS=linux
-set GOARCH=arm64
+#set GOARCH=arm64
+set GOARCH=amd64
 set GOARM=7
 
 HOME=$(cd `dirname $0`; pwd)
@@ -32,6 +33,7 @@ cp $HOME/bin/startup.sh $dir
 
 echo "start building..."
 
-CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM go build -o spw-linux $HOME/main.go
+# CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM go build -o spw-linux $HOME/main.go
+CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -o spw-linux $HOME/main.go
 
 cp $HOME/spw-linux $dir

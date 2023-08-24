@@ -1,13 +1,13 @@
 mysql: 
   port: 3306
-  address: "rm-gs5avp6rwv59iqu9e.mysql.singapore.rds.aliyuncs.com"
-  username: "vega_admin"
-  password: "cmVkaXMuMy4yL"
-  db: "etf_fen_main"
+  address: "127.0.0.1"
+  username: "root"
+  password: "vega20230821"
+  db: "spirit_war"
 
 log:
-  path: "/data/dcw-regulustar/log/info.log"
-  node: "/data/dcw-regulustar/log/info-node.log"
+  path: "/data/aspw/server/log/info.log"
+  node: "/data/aspw/server/log/info-node.log"
   level: "warn"
 
 openai:

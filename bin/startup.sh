@@ -1,9 +1,9 @@
 #!/bin/sh
 
-HOME="/data/dcw-regulustar"
+HOME="/data/aspw/server"
 ENV="prod"
 
 export DUBBO_GO_CONFIG_PATH="$HOME/conf/dubbogo-$ENV.yaml"
 export DALINK_GO_CONFIG_PATH="$HOME/conf/param-$ENV.yaml"
 
-nohup ./regulustar-linux &
+nohup ./spw-linux &
