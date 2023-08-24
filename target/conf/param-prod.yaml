@@ -1,0 +1,14 @@
+mysql: 
+  port: 3306
+  address: "rm-gs5avp6rwv59iqu9e.mysql.singapore.rds.aliyuncs.com"
+  username: "vega_admin"
+  password: "cmVkaXMuMy4yL"
+  db: "etf_fen_main"
+
+log:
+  path: "/data/dcw-regulustar/log/info.log"
+  node: "/data/dcw-regulustar/log/info-node.log"
+  level: "warn"
+
+openai:
+  apikey: "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"

@@ -1,0 +1,6 @@
+go/*
+Library/*
+log/*
+spw-linux
+
+config/param-prod.yaml
