@@ -101,6 +101,7 @@ func RequestGPT(ws *websocket.Conn, mt int, prompt string) {
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
 		fmt.Printf("ChatCompletionStream error: %v\n", err)
+		ws.WriteMessage(mt, []byte("ChatCompletionStream error: "+err.Error()))
 		return
 	}
 	defer stream.Close()
