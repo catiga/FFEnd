@@ -9,13 +9,17 @@ type BaseModel struct {
 
 type Character struct {
 	BaseModel
-	CharName   string
-	CharAvatar string
-	CharInfo   string
-	CharBirth  string
-	CharAge    string
-	CharGender string
-	CharPlace  string
+	CharName       string
+	CharAvatar     string
+	CharInfo       string
+	CharBirth      string
+	CharAge        string
+	CharGender     string
+	CharPlace      string
+	CharFullBody   string
+	CharProfile    string
+	CharNatureCode string
+	CharRegion     string
 }
 
 func (Character) TableName() string {

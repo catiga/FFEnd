@@ -4,3 +4,5 @@ log/*
 spw-linux
 
 config/param-prod.yaml
+config/param-local.yaml
+config/param-dev.yaml

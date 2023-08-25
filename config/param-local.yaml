@@ -11,4 +11,4 @@ log:
   level: "debug"
 
 openai:
-  apikey: "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"
+  apikey: "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"

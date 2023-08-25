@@ -20,8 +20,6 @@ func Include(opts ...Option) {
 }
 
 func Init() *gin.Engine {
-	// Include(api.Routers)
-	// Include(html.Routers)
 	Include(ws.Routers)
 	Include(general.Routers)
 

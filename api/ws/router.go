@@ -2,18 +2,27 @@ package router
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"spw/api/common"
 	"spw/config"
+	"spw/model"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/sashabaranov/go-openai"
+
+	apicommon "spw/api/common"
+	database "spw/system"
 )
 
 var upgrade = websocket.Upgrader{
@@ -36,6 +45,8 @@ func Routers(e *gin.RouterGroup) {
 			log.Println("ws lost connection")
 		}()
 
+		timeNowHs := time.Now().UnixNano() / int64(time.Millisecond)
+
 		for {
 			mt, message, err := ws.ReadMessage()
 			if err != nil {
@@ -51,13 +62,18 @@ func Routers(e *gin.RouterGroup) {
 					break
 				}
 			} else {
-				requestModel, _ := parseRequestMsg(message)
-				log.Println(requestModel)
+				requestModel, err := parseRequestMsg(message)
+				if err != nil {
+					rp := makeReply(common.CODE_ERR_REQFORMAT, err.Error(), timeNowHs, "", requestModel.Timestamp, "")
+					ws.WriteJSON(rp)
+					return
+				}
 
-				if requestModel.Type == "chatGPT" {
-					RequestGPT(ws, mt, requestModel.Data)
+				if requestModel.Method == apicommon.METHOD_GPT {
+					RequestGPT(ws, mt, requestModel, timeNowHs)
 				} else {
-					ws.WriteMessage(mt, []byte("unsupport type"))
+					rp := makeReply(common.CODE_ERR_METHOD_UNSUPPORT, err.Error(), timeNowHs, "", requestModel.Timestamp, "")
+					ws.WriteJSON(rp)
 				}
 			}
 
@@ -81,10 +97,32 @@ func parseRequestMsg(body []byte) (c common.Request, e error) {
 	return c, nil
 }
 
-func RequestGPT(ws *websocket.Conn, mt int, prompt string) {
+func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs int64) {
+	ascode := request.Ascode
+	language := request.Lan
+	chatType := request.Type
+	question := request.Data
+
+	db := database.GetDb()
+	var character model.Character
+	err := db.Model(&model.Character{}).Where("lan = ? and code = ?", language, ascode).Last(&character).Error
+
+	if err != nil {
+		log.Println("chat error:", err)
+		rp := makeReply(common.CODE_ERR_CHAR_UNKNOWN, err.Error(), timeNowHs, "", request.Timestamp, "")
+		ws.WriteJSON(rp)
+		return
+	}
+	if character.Id == 0 {
+		rp := makeReply(common.CODE_ERR_CHAR_NOTFOUND, "character not found", timeNowHs, "", request.Timestamp, "")
+		ws.WriteJSON(rp)
+		return
+	}
 
 	c := openai.NewClient(config.Get().Openai.Apikey)
 	ctx := context.Background()
+
+	prompt := buildPrompt(&character, chatType, question)
 
 	req := openai.ChatCompletionRequest{
 		Model: openai.GPT3Dot5Turbo,
@@ -100,13 +138,19 @@ func RequestGPT(ws *websocket.Conn, mt int, prompt string) {
 	}
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
-		fmt.Printf("ChatCompletionStream error: %v\n", err)
-		ws.WriteMessage(mt, []byte("ChatCompletionStream error: "+err.Error()))
+		log.Println("ChatCompletionStream error:", err)
+
+		rp := makeReply(common.CODE_ERR_GPT_COMPLETE, err.Error(), timeNowHs, "", request.Timestamp, "")
+
+		ws.WriteJSON(rp)
 		return
 	}
 	defer stream.Close()
 
-	fmt.Printf("Stream response: ")
+	log.Println("Stream response: ")
+
+	chatHash := generateChatHash(timeNowHs, request)
+
 	for {
 		response, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
@@ -115,11 +159,43 @@ func RequestGPT(ws *websocket.Conn, mt int, prompt string) {
 		}
 
 		if err != nil {
-			fmt.Printf("\nStream error: %v\n", err)
+			log.Println("\nStream error:", err)
+
+			rp := makeReply(common.CODE_ERR_GPT_STREAM, err.Error(), timeNowHs, "", request.Timestamp, "")
+
+			ws.WriteJSON(rp)
 			return
 		}
 
-		// fmt.Printf(response.Choices[0].Delta.Content)
-		ws.WriteMessage(mt, []byte(response.Choices[0].Delta.Content))
+		rp := makeReply(common.CODE_SUCCESS, "success", timeNowHs, chatHash, request.Timestamp, response.Choices[0].Delta.Content)
+
+		ws.WriteJSON(rp)
+	}
+}
+
+func buildPrompt(chars *model.Character, chatType string, question string) string {
+	return question
+}
+
+func generateChatHash(timeHs int64, request common.Request) string {
+	rand.Seed(time.Now().UnixNano())
+	randomInt := rand.Intn(100000)
+	chatHash := strconv.FormatInt(timeHs, 10) + "-" + strconv.FormatInt(request.Timestamp, 10) + "-" + strconv.FormatInt(int64(randomInt), 10)
+
+	hashByte := sha256.Sum256([]byte(chatHash))
+
+	return hex.EncodeToString(hashByte[:])
+}
+
+func makeReply(code int64, msg string, timeHs int64, chatId string, replyTs int64, content string) *common.Response {
+	return &common.Response{
+		Code:      code,
+		Msg:       msg,
+		Timestamp: timeHs,
+		Data: map[string]interface{}{
+			"Id":      chatId,
+			"ReplyTs": replyTs,
+			"Content": content,
+		},
 	}
 }

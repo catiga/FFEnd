@@ -11,4 +11,8 @@ func Routers(e *gin.RouterGroup) {
 	adminGroup.POST("login", controller.Login)
 	adminGroup.GET("characters", controller.CharacterList)
 	adminGroup.GET("methods", controller.MethodList)
+
+	userGroup := e.Group("/user")
+	userGroup.GET("character", controller.Characters)
+	userGroup.POST("character", controller.CharacterWithCode)
 }
