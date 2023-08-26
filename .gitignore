@@ -1,6 +1,7 @@
 go/*
 Library/*
 log/*
+target/*
 spw-linux
 
 config/param-local.yaml
