@@ -96,3 +96,94 @@ func MethodList(c *gin.Context) {
 	res.Data = result
 	c.JSON(http.StatusOK, res)
 }
+
+func CharSettingList(c *gin.Context) {
+	res := common.Response{}
+
+	code := c.PostForm("code")
+	lan := c.PostForm("lan")
+
+	var result []model.CharBack
+	db := database.GetDb()
+	db.Model(&model.CharBack{}).Where("code = ? and lan = ? and flag = ?", code, lan, 0).Find(&result)
+
+	res.Code = 0
+	res.Msg = "success"
+	res.Data = result
+	c.JSON(http.StatusOK, res)
+}
+
+func CharSettingSave(c *gin.Context) {
+	res := common.Response{}
+
+	charIdStr := c.PostForm("charId")
+	role := c.PostForm("role")
+	prompt := c.PostForm("prompt")
+
+	if role != "system" && role != "assistant" {
+		res.Code = common.CODE_ERR_CHAR_NOTFOUND
+		res.Msg = "character not found"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	if len(prompt) == 0 {
+		res.Code = common.CODE_ERR_CHAR_PARAM
+		res.Msg = "param error"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	var cha model.Character
+	db := database.GetDb()
+	db.Model(&model.Character{}).Where("id = ?", charIdStr).First(&cha)
+
+	if cha.Id == 0 {
+		res.Code = common.CODE_ERR_CHAR_ROLE_CAT
+		res.Msg = "params error"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	now := time.Now()
+	data := model.CharBack{
+		BaseModel: model.BaseModel{
+			Code: cha.Code,
+			Lan:  cha.Lan,
+			Flag: 0,
+		},
+		CharId:  cha.Id,
+		Role:    role,
+		Prompt:  prompt,
+		Seq:     3,
+		AddTime: &now,
+	}
+	db.Save(&data)
+
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	c.JSON(http.StatusOK, res)
+}
+
+func CharSettingDel(c *gin.Context) {
+	res := common.Response{}
+
+	settingId := c.PostForm("setid")
+
+	var cha model.CharBack
+	db := database.GetDb()
+	db.Model(&model.CharBack{}).Where("id = ?", settingId).First(&cha)
+
+	if cha.Id == 0 {
+		res.Code = common.CODE_ERR_CHAR_NOTFOUND
+		res.Msg = "params error"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+	cha.Flag = -1
+	db.Updates(cha)
+
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	c.JSON(http.StatusOK, res)
+}
