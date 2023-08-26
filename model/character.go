@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type BaseModel struct {
 	Id   uint64 `gorm:"AUTO_INCREMENT;PRIMARY_KEY"`
 	Code string
@@ -34,4 +36,17 @@ type Method struct {
 
 func (Method) TableName() string {
 	return "spw_method"
+}
+
+type CharBack struct {
+	BaseModel
+	CharId  uint64
+	Role    string
+	Prompt  string
+	Seq     int
+	AddTime *time.Time
+}
+
+func (CharBack) TableName() string {
+	return "spw_char_background"
 }

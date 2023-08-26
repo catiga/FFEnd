@@ -122,19 +122,20 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 	c := openai.NewClient(config.Get().Openai.Apikey)
 	ctx := context.Background()
 
-	prompt := buildPrompt(&character, chatType, question)
+	background := buildPrompt(&character, chatType, question)
 
 	req := openai.ChatCompletionRequest{
 		Model: openai.GPT3Dot5Turbo,
 		// MaxTokens: 4096,
 		Temperature: 0.8,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: prompt,
-			},
-		},
-		Stream: true,
+		// Messages: []openai.ChatCompletionMessage{
+		// 	{
+		// 		Role:    openai.ChatMessageRoleUser,
+		// 		Content: prompt,
+		// 	},
+		// },
+		Messages: background,
+		Stream:   true,
 	}
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
@@ -173,8 +174,35 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 	}
 }
 
-func buildPrompt(chars *model.Character, chatType string, question string) string {
-	return question
+func buildPrompt(chars *model.Character, chatType string, question string) []openai.ChatCompletionMessage {
+	var back []openai.ChatCompletionMessage
+
+	db := database.GetDb()
+
+	var result []model.CharBack
+	db.Model(&model.CharBack{}).Where("code = ? and lan = ? and flag = ?", chars.Code, chars.Lan, 0).Order("seq asc").Find(&result)
+
+	if len(result) > 0 {
+		for _, v := range result {
+			roleType := ""
+			if v.Role == "system" {
+				roleType = openai.ChatMessageRoleSystem
+			} else if v.Role == "assistant" {
+				roleType = openai.ChatMessageRoleAssistant
+			}
+			if len(roleType) > 0 {
+				back = append(back, openai.ChatCompletionMessage{
+					Role:    roleType,
+					Content: v.Prompt,
+				})
+			}
+		}
+	}
+	back = append(back, openai.ChatCompletionMessage{
+		Role:    openai.ChatMessageRoleUser,
+		Content: question,
+	})
+	return back
 }
 
 func generateChatHash(timeHs int64, request common.Request) string {
