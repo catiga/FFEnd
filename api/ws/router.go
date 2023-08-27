@@ -162,7 +162,9 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 	for {
 		response, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			fmt.Println("\nStream finished")
+			log.Println("\nStream EOF finished")
+			// rp := makeReply(common.CODE_ERR_GPT_STREAM_EOF, err.Error(), timeNowHs, "", request.Timestamp, "")
+			// ws.WriteJSON(rp)
 			return
 		}
 
