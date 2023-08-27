@@ -14,6 +14,7 @@ func Routers(e *gin.RouterGroup) {
 	adminGroup.POST("charsettings", controller.CharSettingList)
 	adminGroup.POST("charsetsave", controller.CharSettingSave)
 	adminGroup.POST("charsetdel", controller.CharSettingDel)
+	adminGroup.POST("characteradd", controller.CharacterAdd)
 
 	userGroup := e.Group("/user")
 	userGroup.GET("character", controller.Characters)

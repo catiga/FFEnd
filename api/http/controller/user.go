@@ -43,7 +43,7 @@ func Characters(c *gin.Context) {
 				"place":      v.CharPlace,
 				"bodyImg":    v.CharFullBody,
 				"profile":    v.CharProfile,
-				"natureCode": v.CharNatureCode,
+				"natureCode": v.CharNature,
 				"code":       v.Code,
 				"region":     v.CharRegion,
 			})
@@ -93,7 +93,7 @@ func CharacterWithCode(c *gin.Context) {
 		"place":      v.CharPlace,
 		"bodyImg":    v.CharFullBody,
 		"profile":    v.CharProfile,
-		"natureCode": v.CharNatureCode,
+		"natureCode": v.CharNature,
 		"code":       v.Code,
 		"region":     v.CharRegion,
 	}

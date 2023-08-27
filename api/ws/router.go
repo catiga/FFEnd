@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"math/rand"
 	"net/http"
 	"spw/api/common"
@@ -124,10 +125,16 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 
 	background := buildPrompt(&character, chatType, question)
 
+	defaultTemp := 0.5
+	if character.CharNature >= 0 && character.CharNature <= 100 {
+		vs := float64(character.CharNature) / 100
+		defaultTemp = math.Round(vs*10) / 10
+	}
 	req := openai.ChatCompletionRequest{
 		Model: openai.GPT3Dot5Turbo,
 		// MaxTokens: 4096,
-		Temperature: 0.8,
+		// Temperature: 0.8,
+		Temperature: float32(defaultTemp),
 		// Messages: []openai.ChatCompletionMessage{
 		// 	{
 		// 		Role:    openai.ChatMessageRoleUser,
@@ -189,6 +196,8 @@ func buildPrompt(chars *model.Character, chatType string, question string) []ope
 				roleType = openai.ChatMessageRoleSystem
 			} else if v.Role == "assistant" {
 				roleType = openai.ChatMessageRoleAssistant
+			} else if v.Role == "user" {
+				roleType = openai.ChatMessageRoleUser
 			}
 			if len(roleType) > 0 {
 				back = append(back, openai.ChatCompletionMessage{

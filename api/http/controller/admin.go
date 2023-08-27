@@ -187,3 +187,63 @@ func CharSettingDel(c *gin.Context) {
 	res.Msg = "success"
 	c.JSON(http.StatusOK, res)
 }
+
+func CharacterAdd(c *gin.Context) {
+	res := common.Response{}
+
+	idStr := c.PostForm("id")
+	name := c.PostForm("name")
+	info := c.PostForm("info")
+	birth := c.PostForm("birth")
+	age := c.PostForm("age")
+	gender := c.PostForm("gender")
+	place := c.PostForm("place")
+	profile := c.PostForm("profile")
+	region := c.PostForm("region")
+	nature := c.PostForm("nature")
+
+	code := c.PostForm("code")
+	lan := c.PostForm("lan")
+
+	data := model.Character{}
+	db := database.GetDb()
+
+	update := false
+	if len(idStr) > 0 && idStr != "0" {
+		db.Model(&data).Where("id = ?", idStr).Last(&data)
+		if data.Id == 0 {
+			res.Code = common.CODE_ERR_CHAR_NOTFOUND
+			res.Msg = "character not found"
+			c.JSON(http.StatusOK, res)
+			return
+		}
+		update = true
+	}
+
+	natureInt, _ := strconv.Atoi(nature)
+
+	data.CharName = name
+	data.CharInfo = info
+	data.CharBirth = birth
+	data.CharAge = age
+	data.CharGender = gender
+	data.CharPlace = place
+	data.CharProfile = profile
+	data.CharNature = natureInt
+	data.CharRegion = region
+
+	data.Code = code
+	data.Lan = lan
+	data.Flag = 0
+
+	if !update {
+		err := db.Model(&model.Character{}).Create(&data).Error
+		log.Println(err)
+	} else {
+		db.Updates(&data)
+	}
+
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	c.JSON(http.StatusOK, res)
+}
