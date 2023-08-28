@@ -133,7 +133,7 @@ func ChatHistory(c *gin.Context) {
 	db := database.GetDb()
 
 	if len(params) > 1 {
-		err := db.Model(&model.ChatContent{}).Where(ql, params[:]).Order("add_time asc").Find(&result).Error
+		err := db.Model(&model.ChatContent{}).Where(ql, params...).Order("add_time asc").Find(&result).Error
 		log.Println("find history:", err, ql)
 	}
 
