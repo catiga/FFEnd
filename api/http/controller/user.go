@@ -127,6 +127,8 @@ func ChatHistory(c *gin.Context) {
 		}
 	}
 
+	log.Println(useridstr, devId, charCode, params)
+
 	var result []model.ChatContent
 	db := database.GetDb()
 
