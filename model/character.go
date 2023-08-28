@@ -60,6 +60,7 @@ type ChatContent struct {
 	Content   string
 	Direction string
 	AddTime   *time.Time
+	CharCode  string
 }
 
 func (ChatContent) TableName() string {

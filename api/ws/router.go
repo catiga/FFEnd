@@ -156,6 +156,7 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 		Content:   question,
 		Direction: common.CODE_DIRECTION_IN,
 		AddTime:   &chatIn,
+		CharCode:  character.Code,
 	}
 	db.Save(&chat)
 
@@ -190,6 +191,7 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 				Content:   replyMsg,
 				Direction: common.CODE_DIRECTION_OUT,
 				AddTime:   &chatIn,
+				CharCode:  character.Code,
 			}
 			db.Save(&replyChat)
 
