@@ -23,6 +23,7 @@ import (
 	"github.com/sashabaranov/go-openai"
 
 	apicommon "spw/api/common"
+	"spw/embedding"
 	database "spw/system"
 )
 
@@ -123,7 +124,7 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 	c := openai.NewClient(config.Get().Openai.Apikey)
 	ctx := context.Background()
 
-	background := buildPrompt(&character, chatType, question)
+	background := buildPrompt(&character, chatType, request, question)
 
 	defaultTemp := 0.5
 	if character.CharNature >= 0 && character.CharNature <= 100 {
@@ -191,33 +192,75 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 				AddTime:   &chatIn,
 			}
 			db.Save(&replyChat)
+
+			var vecChats []model.ChatContent
+			vecChats = append(vecChats, chat)
+			vecChats = append(vecChats, replyChat)
+			go func(chats []model.ChatContent) {
+				gpt := &embedding.GPT{}
+				gpt.BatchUpsert(chats)
+			}(vecChats)
 			return
 		}
 
 		if err != nil {
 			log.Println("\nStream error:", err)
-
 			rp := makeReply(common.CODE_ERR_GPT_STREAM, err.Error(), timeNowHs, "", request.Timestamp, "")
-
 			ws.WriteJSON(rp)
 			return
 		}
 
 		rp := makeReply(common.CODE_SUCCESS, "success", timeNowHs, chatHash, request.Timestamp, response.Choices[0].Delta.Content)
-
 		replyMsg += response.Choices[0].Delta.Content
-
 		ws.WriteJSON(rp)
 	}
 }
 
-func buildPrompt(chars *model.Character, chatType string, question string) []openai.ChatCompletionMessage {
+func buildPrompt(chars *model.Character, chatType string, request common.Request, question string) []openai.ChatCompletionMessage {
 	var back []openai.ChatCompletionMessage
 
 	db := database.GetDb()
 
 	var result []model.CharBack
 	db.Model(&model.CharBack{}).Where("code = ? and lan = ? and flag = ?", chars.Code, chars.Lan, 0).Order("seq asc").Find(&result)
+
+	gpt := &embedding.GPT{}
+	embResults, err := gpt.Query("", question, map[string]string{
+		"user":  strconv.FormatUint(request.UserId, 10),
+		"devid": request.DevId,
+	}, 500)
+	if err == nil && len(embResults) > 0 {
+		var ids []uint64
+		for _, v := range embResults {
+			log.Println(v.Id, v.Metadata)
+			index := 0
+			if v.Metadata["user"] == strconv.FormatUint(request.UserId, 10) || v.Metadata["devid"] == request.DevId {
+				if v.Score > float64(0.6) {
+					index++
+					idint, err := strconv.ParseUint(v.Id, 10, 64)
+					if err == nil {
+						ids = append(ids, idint)
+						if index > 50 {
+							break
+						}
+					}
+				}
+			}
+		}
+		var result_1 []model.ChatContent
+		// db.Model(&model.ChatContent{}).Where("id IN ?", ids).Order("seq asc").Find(&result_1)
+		err := db.Find(&result_1, ids).Error
+		log.Println(err)
+		if len(result_1) > 0 {
+			log.Println("find appendix user data:", len(result_1))
+			for _, v := range result_1 {
+				result = append(result, model.CharBack{
+					Role:   "user",
+					Prompt: v.Content,
+				})
+			}
+		}
+	}
 
 	if len(result) > 0 {
 		for _, v := range result {
