@@ -113,8 +113,6 @@ func ChatHistory(c *gin.Context) {
 
 	userid, err := strconv.ParseUint(useridstr, 10, 64)
 
-	var result []model.ChatContent
-
 	ql := "1 = 1"
 	var params []interface{}
 	if err == nil && userid > 0 {
@@ -127,8 +125,12 @@ func ChatHistory(c *gin.Context) {
 		}
 	}
 
+	var result []model.ChatContent
 	db := database.GetDb()
-	db.Model(&model.ChatContent{}).Where(ql, params).Order("add_time asc").Find(&result)
+
+	if len(params) > 0 {
+		db.Model(&model.ChatContent{}).Where(ql, params).Order("add_time asc").Find(&result)
+	}
 
 	var data []map[string]interface{}
 
