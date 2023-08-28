@@ -7,6 +7,7 @@ import (
 	"spw/model"
 	database "spw/system"
 	tool "spw/tool"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -101,5 +102,50 @@ func CharacterWithCode(c *gin.Context) {
 	res.Code = common.CODE_SUCCESS
 	res.Msg = "success"
 	res.Data = data
+	c.JSON(http.StatusOK, res)
+}
+
+func ChatHistory(c *gin.Context) {
+	res := common.Response{}
+
+	useridstr := c.PostForm("userid")
+	devId := c.Request.Header.Get("devid")
+
+	userid, err := strconv.ParseUint(useridstr, 10, 64)
+
+	var result []model.ChatContent
+
+	ql := "1 = 1"
+	var params []interface{}
+	if err == nil && userid > 0 {
+		ql += " and user_id = ?"
+		params = append(params, userid)
+	} else {
+		if len(devId) > 0 {
+			ql += " and dev_id = ?"
+			params = append(params, devId)
+		}
+	}
+
+	db := database.GetDb()
+	db.Model(&model.ChatContent{}).Where(ql, params).Order("add_time asc").Find(&result)
+
+	var data []map[string]interface{}
+
+	for _, v := range result {
+		data = append(data, map[string]interface{}{
+			"id":        v.Id,
+			"userid":    v.UserId,
+			"content":   v.Content,
+			"direction": v.Direction,
+			"charid":    v.CharId,
+			"time":      v.AddTime,
+		})
+	}
+
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	res.Data = data
+
 	c.JSON(http.StatusOK, res)
 }

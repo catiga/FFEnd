@@ -19,4 +19,5 @@ func Routers(e *gin.RouterGroup) {
 	userGroup := e.Group("/user")
 	userGroup.GET("character", controller.Characters)
 	userGroup.POST("character", controller.CharacterWithCode)
+	userGroup.POST("chat/history", controller.ChatHistory)
 }
