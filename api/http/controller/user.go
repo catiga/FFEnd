@@ -109,7 +109,7 @@ func ChatHistory(c *gin.Context) {
 	res := common.Response{}
 
 	useridstr := c.PostForm("userid")
-	devId := c.Request.Header.Get("devid")
+	devId := c.Request.Header.Get("Devid")
 	charCode := c.PostForm("code")
 
 	userid, err := strconv.ParseUint(useridstr, 10, 64)
