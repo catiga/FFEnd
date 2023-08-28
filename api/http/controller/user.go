@@ -134,7 +134,7 @@ func ChatHistory(c *gin.Context) {
 
 	if len(params) > 1 {
 		err := db.Model(&model.ChatContent{}).Where(ql, params).Order("add_time asc").Find(&result).Error
-		log.Println("find history:", err)
+		log.Println("find history:", err, ql)
 	}
 
 	var data []map[string]interface{}
