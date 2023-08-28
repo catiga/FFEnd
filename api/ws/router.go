@@ -144,6 +144,20 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 		Messages: background,
 		Stream:   true,
 	}
+
+	chatIn := time.Now()
+	//Save chat data
+	chat := model.ChatContent{
+		Flag:      0,
+		DevId:     request.DevId,
+		UserId:    request.UserId,
+		CharId:    character.Id,
+		Content:   question,
+		Direction: common.CODE_DIRECTION_IN,
+		AddTime:   &chatIn,
+	}
+	db.Save(&chat)
+
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
 		log.Println("ChatCompletionStream error:", err)
@@ -159,12 +173,24 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 
 	chatHash := generateChatHash(timeNowHs, request)
 
+	replyMsg := ""
+
 	for {
 		response, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
 			log.Println("\nStream EOF finished")
 			// rp := makeReply(common.CODE_ERR_GPT_STREAM_EOF, err.Error(), timeNowHs, "", request.Timestamp, "")
 			// ws.WriteJSON(rp)
+			replyChat := model.ChatContent{
+				Flag:      0,
+				DevId:     request.DevId,
+				UserId:    request.UserId,
+				CharId:    character.Id,
+				Content:   replyMsg,
+				Direction: common.CODE_DIRECTION_OUT,
+				AddTime:   &chatIn,
+			}
+			db.Save(&replyChat)
 			return
 		}
 
@@ -178,6 +204,8 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 		}
 
 		rp := makeReply(common.CODE_SUCCESS, "success", timeNowHs, chatHash, request.Timestamp, response.Choices[0].Delta.Content)
+
+		replyMsg += response.Choices[0].Delta.Content
 
 		ws.WriteJSON(rp)
 	}

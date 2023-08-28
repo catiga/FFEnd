@@ -50,3 +50,18 @@ type CharBack struct {
 func (CharBack) TableName() string {
 	return "spw_char_background"
 }
+
+type ChatContent struct {
+	Id        uint64 `gorm:"AUTO_INCREMENT;PRIMARY_KEY"`
+	Flag      int
+	DevId     string
+	UserId    uint64
+	CharId    uint64
+	Content   string
+	Direction string
+	AddTime   *time.Time
+}
+
+func (ChatContent) TableName() string {
+	return "spw_chat"
+}
