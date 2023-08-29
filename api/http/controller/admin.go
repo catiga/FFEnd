@@ -154,7 +154,7 @@ func CharSettingSave(c *gin.Context) {
 	//判断一下有多少基础设定了，这个不允许过多
 	var count int64
 	db.Model(&model.CharBack{}).Where("flag != ? and char_id = ?", -1, cha.Id).Count(&count)
-	if count > 10 {
+	if count > 15 {
 		res.Code = common.CODE_ERR_CHARBACK_MAX
 		res.Msg = "exceed max character background settings count"
 		c.JSON(http.StatusOK, res)
