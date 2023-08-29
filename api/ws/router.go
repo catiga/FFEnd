@@ -237,12 +237,12 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 			log.Println(v.Id, v.Metadata)
 			index := 0
 			if v.Metadata["user"] == strconv.FormatUint(request.UserId, 10) || v.Metadata["devid"] == request.DevId {
-				if v.Score > float64(0.6) {
+				if v.Score > float64(0.88) {
 					index++
 					idint, err := strconv.ParseUint(v.Id, 10, 64)
 					if err == nil {
 						ids = append(ids, idint)
-						if index > 50 {
+						if index > 10 {
 							break
 						}
 					}
@@ -253,7 +253,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		// db.Model(&model.ChatContent{}).Where("id IN ?", ids).Order("seq asc").Find(&result_1)
 		err := db.Find(&result_1, ids).Error
 		log.Println(err)
-		if len(result_1) > 0 {
+		if len(result_1) > 0 { // here is related chat history data
 			log.Println("find appendix user data:", len(result_1))
 			for _, v := range result_1 {
 				result = append(result, model.CharBack{
@@ -269,16 +269,21 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 			roleType := ""
 			if v.Role == "system" {
 				roleType = openai.ChatMessageRoleSystem
-			} else if v.Role == "assistant" {
-				roleType = openai.ChatMessageRoleAssistant
-			} else if v.Role == "user" {
-				roleType = openai.ChatMessageRoleUser
-			}
-			if len(roleType) > 0 {
 				back = append(back, openai.ChatCompletionMessage{
 					Role:    roleType,
 					Content: v.Prompt,
 				})
+			} else if v.Role == "assistant" {
+				back = append(back, openai.ChatCompletionMessage{
+					Role:    openai.ChatMessageRoleUser,
+					Content: v.Prompt,
+				})
+				back = append(back, openai.ChatCompletionMessage{
+					Role:    openai.ChatMessageRoleAssistant,
+					Content: v.Answer,
+				})
+			} else if v.Role == "user" {
+				roleType = openai.ChatMessageRoleUser
 			}
 		}
 	}
