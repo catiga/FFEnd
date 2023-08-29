@@ -222,8 +222,33 @@ func CharacterAdd(c *gin.Context) {
 	code := c.PostForm("code")
 	lan := c.PostForm("lan")
 
+	if len(code) == 0 || len(lan) == 0 {
+		res.Code = common.CODE_ERR_CHAR_BASPARAM
+		res.Msg = "Basic params error"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	if lan != "zh-CN" && lan != "en" {
+		res.Code = common.CODE_ERR_CHAR_BASPARAM
+		res.Msg = "Basic params error"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
 	data := model.Character{}
 	db := database.GetDb()
+
+	//判断code和lan对应数据是否存在
+	var existChar model.Character
+	db.Model(&model.Character{}).Where("code = ? and lan = ? and flag != ?", code, lan, -1).Last(&existChar)
+	if existChar.Id > 0 {
+		res.Code = common.CODE_ERR_CHAR_EXIST
+		res.Msg = "character exist"
+		res.Data = existChar
+		c.JSON(http.StatusOK, res)
+		return
+	}
 
 	update := false
 	if len(idStr) > 0 && idStr != "0" {
