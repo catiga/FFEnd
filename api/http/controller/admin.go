@@ -219,6 +219,9 @@ func CharacterAdd(c *gin.Context) {
 	region := c.PostForm("region")
 	nature := c.PostForm("nature")
 
+	avatar := c.PostForm("avatar")
+	bodyImg := c.PostForm("bodyimg")
+
 	code := c.PostForm("code")
 	lan := c.PostForm("lan")
 
@@ -273,6 +276,8 @@ func CharacterAdd(c *gin.Context) {
 	data.CharProfile = profile
 	data.CharNature = natureInt
 	data.CharRegion = region
+	data.CharAvatar = avatar
+	data.CharFullBody = bodyImg
 
 	data.Code = code
 	data.Lan = lan
