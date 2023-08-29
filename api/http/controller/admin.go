@@ -242,17 +242,6 @@ func CharacterAdd(c *gin.Context) {
 	data := model.Character{}
 	db := database.GetDb()
 
-	//判断code和lan对应数据是否存在
-	var existChar model.Character
-	db.Model(&model.Character{}).Where("code = ? and lan = ? and flag != ?", code, lan, -1).Last(&existChar)
-	if existChar.Id > 0 {
-		res.Code = common.CODE_ERR_CHAR_EXIST
-		res.Msg = "character exist"
-		res.Data = existChar
-		c.JSON(http.StatusOK, res)
-		return
-	}
-
 	update := false
 	if len(idStr) > 0 && idStr != "0" {
 		db.Model(&data).Where("id = ?", idStr).Last(&data)
@@ -263,6 +252,17 @@ func CharacterAdd(c *gin.Context) {
 			return
 		}
 		update = true
+	}
+
+	//判断code和lan对应数据是否存在
+	var existChar model.Character
+	db.Model(&model.Character{}).Where("code = ? and lan = ? and flag != ?", code, lan, -1).Last(&existChar)
+	if existChar.Id > 0 && existChar.Id != data.Id {
+		res.Code = common.CODE_ERR_CHAR_EXIST
+		res.Msg = "character exist"
+		res.Data = existChar
+		c.JSON(http.StatusOK, res)
+		return
 	}
 
 	natureInt, _ := strconv.Atoi(nature)
