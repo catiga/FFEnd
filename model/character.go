@@ -22,6 +22,9 @@ type Character struct {
 	CharProfile  string
 	CharNature   int
 	CharRegion   string
+
+	ModelName string
+	ModelKey  string
 }
 
 func (Character) TableName() string {

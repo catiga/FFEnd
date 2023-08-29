@@ -121,7 +121,15 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 		return
 	}
 
-	c := openai.NewClient(config.Get().Openai.Apikey)
+	defaultModelKey := config.Get().Openai.Apikey
+	defaultModelName := openai.GPT3Dot5Turbo
+
+	if len(character.ModelKey) > 0 && len(character.ModelName) > 0 {
+		defaultModelKey = character.ModelKey
+		defaultModelName = character.ModelName
+		log.Println("replace default model：", defaultModelName)
+	}
+	c := openai.NewClient(defaultModelKey)
 	ctx := context.Background()
 
 	background := buildPrompt(&character, chatType, request, question)
@@ -132,7 +140,7 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 		defaultTemp = math.Round(vs*10) / 10
 	}
 	req := openai.ChatCompletionRequest{
-		Model: openai.GPT3Dot5Turbo,
+		Model: defaultModelName, //openai.GPT3Dot5Turbo,
 		// MaxTokens: 4096,
 		// Temperature: 0.8,
 		Temperature: float32(defaultTemp),
