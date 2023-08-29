@@ -22,7 +22,7 @@ func GetSts() string {
 	//构建一个阿里云客户端, 用于发起请求。
 	//设置调用者（RAM用户或RAM角色）的AccessKey ID和AccessKey Secret。
 	//       AI算命
-	client, err := sts.NewClientWithAccessKey("ap-southeast-1", "LTAI5tQrAQHpYo9zfv9V6sVC", "LWI585O5wCabSen8v94f7wQJ0Btuyn")
+	client, err := sts.NewClientWithAccessKey("ap-southeast-1", "LTAI5tN617yfYhiMhhgZeq5S", "9t4uTsivpsbTk3Buc3kFW8tSg92LTR")
 
 	fmt.Println(client.GetConfig())
 
