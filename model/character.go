@@ -43,6 +43,7 @@ type CharBack struct {
 	CharId  uint64
 	Role    string
 	Prompt  string
+	Answer  string
 	Seq     int
 	AddTime *time.Time
 }

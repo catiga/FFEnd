@@ -105,7 +105,7 @@ func CharSettingList(c *gin.Context) {
 
 	var result []model.CharBack
 	db := database.GetDb()
-	db.Model(&model.CharBack{}).Where("code = ? and lan = ? and flag = ?", code, lan, 0).Find(&result)
+	db.Model(&model.CharBack{}).Where("code = ? and lan = ? and flag = ?", code, lan, 0).Order("seq asc").Find(&result)
 
 	res.Code = 0
 	res.Msg = "success"
@@ -119,9 +119,11 @@ func CharSettingSave(c *gin.Context) {
 	charIdStr := c.PostForm("charId")
 	role := c.PostForm("role")
 	prompt := c.PostForm("prompt")
+	answer := c.PostForm("answer")
+	seqStr := c.PostForm("seq")
 
 	if role != "system" && role != "assistant" {
-		res.Code = common.CODE_ERR_CHAR_NOTFOUND
+		res.Code = common.CODE_ERR_CHAR_ROLE_CAT
 		res.Msg = "character not found"
 		c.JSON(http.StatusOK, res)
 		return
@@ -134,13 +136,27 @@ func CharSettingSave(c *gin.Context) {
 		return
 	}
 
+	seq, err := strconv.ParseInt(seqStr, 10, 64)
+	if err != nil {
+		seq = 0
+	}
+
 	var cha model.Character
 	db := database.GetDb()
 	db.Model(&model.Character{}).Where("id = ?", charIdStr).First(&cha)
 
 	if cha.Id == 0 {
-		res.Code = common.CODE_ERR_CHAR_ROLE_CAT
+		res.Code = common.CODE_ERR_CHAR_NOTFOUND
 		res.Msg = "params error"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+	//判断一下有多少基础设定了，这个不允许过多
+	var count int64
+	db.Model(&model.CharBack{}).Where("flag != ?", -1).Count(&count)
+	if count > 10 {
+		res.Code = common.CODE_ERR_CHARBACK_MAX
+		res.Msg = "exceed max character background settings count"
 		c.JSON(http.StatusOK, res)
 		return
 	}
@@ -155,8 +171,9 @@ func CharSettingSave(c *gin.Context) {
 		CharId:  cha.Id,
 		Role:    role,
 		Prompt:  prompt,
-		Seq:     3,
+		Seq:     int(seq),
 		AddTime: &now,
+		Answer:  answer,
 	}
 	db.Save(&data)
 
