@@ -97,16 +97,20 @@ func (*GPT) SaveChatEmbeddings(data []EmbedResult, ids []model.ChatContent) erro
 
 	var embReq []map[string]interface{}
 	for index, _ := range data {
-		embReq = append(embReq, map[string]interface{}{
-			"id":     strconv.FormatUint(ids[index].Id, 10),
-			"values": data[index].Data[0].Embedding,
-			"metadata": map[string]string{
-				"user":   strconv.FormatUint(ids[index].UserId, 10),
-				"devid":  ids[index].DevId,
-				"char":   strconv.FormatUint(ids[index].CharId, 10),
-				"direct": ids[index].Direction,
-			},
-		})
+		if len(data[index].Data) > 0 {
+			embReq = append(embReq, map[string]interface{}{
+				"id":     strconv.FormatUint(ids[index].Id, 10),
+				"values": data[index].Data[0].Embedding,
+				"metadata": map[string]string{
+					"user":   strconv.FormatUint(ids[index].UserId, 10),
+					"devid":  ids[index].DevId,
+					"char":   strconv.FormatUint(ids[index].CharId, 10),
+					"direct": ids[index].Direction,
+				},
+			})
+		} else {
+			log.Println("pinecone save why:::", data[index].Data)
+		}
 	}
 
 	bytesData, _ := json.Marshal(map[string]interface{}{
