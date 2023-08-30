@@ -269,7 +269,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		err := db.Find(&result_1, ids).Error
 		log.Println(err)
 		if len(result_1) > 0 { // here is related chat history data
-			log.Println("find appendix user data:", len(result_1))
+			log.Println("find appendix user data:", len(result_1), ids)
 			for _, v := range result_1 {
 				if v.Direction == "1" {
 					result = append(result, model.CharBack{
