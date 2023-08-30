@@ -143,8 +143,16 @@ func ChatHistory(c *gin.Context) {
 		data = append(data, map[string]interface{}{
 			"id":        v.Id,
 			"userid":    v.UserId,
-			"content":   v.Content,
-			"direction": v.Direction,
+			"content":   v.Question,
+			"direction": "1",
+			"charid":    v.CharId,
+			"time":      v.AddTime,
+		})
+		data = append(data, map[string]interface{}{
+			"id":        v.Id,
+			"userid":    v.UserId,
+			"content":   v.Reply,
+			"direction": "2",
 			"charid":    v.CharId,
 			"time":      v.AddTime,
 		})

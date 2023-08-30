@@ -157,16 +157,16 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 	chatIn := time.Now()
 	//Save chat data
 	chat := model.ChatContent{
-		Flag:      0,
-		DevId:     request.DevId,
-		UserId:    request.UserId,
-		CharId:    character.Id,
-		Content:   question,
-		Direction: common.CODE_DIRECTION_IN,
-		AddTime:   &chatIn,
-		CharCode:  character.Code,
+		Flag:     0,
+		DevId:    request.DevId,
+		UserId:   request.UserId,
+		CharId:   character.Id,
+		Question: question,
+		Reply:    "",
+		AddTime:  &chatIn,
+		CharCode: character.Code,
 	}
-	db.Save(&chat)
+	// db.Save(&chat)
 
 	stream, err := c.CreateChatCompletionStream(ctx, req)
 	if err != nil {
@@ -189,27 +189,21 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 		response, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
 			log.Println("\nStream EOF finished")
-			// rp := makeReply(common.CODE_ERR_GPT_STREAM_EOF, err.Error(), timeNowHs, "", request.Timestamp, "")
-			// ws.WriteJSON(rp)
-			replyChat := model.ChatContent{
-				Flag:      0,
-				DevId:     request.DevId,
-				UserId:    request.UserId,
-				CharId:    character.Id,
-				Content:   replyMsg,
-				Direction: common.CODE_DIRECTION_OUT,
-				AddTime:   &chatIn,
-				CharCode:  character.Code,
-			}
-			db.Save(&replyChat)
+			chat.Reply = replyMsg
+			db.Save(&chat)
 
-			var vecChats []model.ChatContent
-			vecChats = append(vecChats, chat)
-			vecChats = append(vecChats, replyChat)
-			go func(chats []model.ChatContent) {
+			go func(chat *model.ChatContent) {
 				gpt := &embedding.GPT{}
-				gpt.BatchUpsert(chats)
-			}(vecChats)
+				gpt.BatchUpsert(&embedding.EmbededUpsertData{
+					QuestionId: chat.Id,
+					Question:   chat.Question,
+					Reply:      chat.Reply,
+					UserId:     chat.UserId,
+					DevId:      chat.DevId,
+					CharId:     chat.CharId,
+					CharCode:   chat.CharCode,
+				})
+			}(&chat)
 			return
 		}
 
@@ -273,19 +267,14 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		if len(result_1) > 0 { // here is related chat history data
 			log.Println("find appendix user data:", len(result_1), ids)
 			for _, v := range result_1 {
-				if v.Direction == "1" {
-					log.Println("rebuild: user--" + v.Content)
-					result = append(result, model.CharBack{
-						Role:   "user",
-						Prompt: v.Content,
-					})
-				} else if v.Direction == "2" {
-					log.Println("rebuild: aier--" + v.Content)
-					result = append(result, model.CharBack{
-						Role:   "assistant",
-						Prompt: v.Content,
-					})
-				}
+				result = append(result, model.CharBack{
+					Role:   "user",
+					Prompt: v.Question,
+				})
+				result = append(result, model.CharBack{
+					Role:   "assistant",
+					Prompt: v.Reply,
+				})
 			}
 		}
 	}

@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"spw/config"
-	"spw/model"
 	"strconv"
 	"strings"
 )
@@ -50,6 +49,16 @@ type EmbedQueryMatch struct {
 	Namespace string             `json:"namespace"`
 }
 
+type EmbededUpsertData struct {
+	QuestionId uint64
+	Question   string
+	Reply      string
+	UserId     uint64
+	DevId      string
+	CharId     uint64
+	CharCode   string
+}
+
 func (*GPT) Embedding(content string, model string) (*EmbedResult, error) {
 	body := map[string]string{
 		"input": content,
@@ -86,32 +95,55 @@ func (*GPT) Embedding(content string, model string) (*EmbedResult, error) {
 	return &v, nil
 }
 
-func (*GPT) SaveChatEmbeddings(data []EmbedResult, ids []model.ChatContent) error {
-	if len(data) == 0 || len(data) != len(ids) {
-		return errors.New("data length params error")
-	}
+func (ins *GPT) BatchUpsert(data *EmbededUpsertData) error {
 
-	if len(data) > 100 {
-		return errors.New("exceed max limitation")
-	}
+	// var emb []EmbedResult
 
+	content := "question:`" + data.Question + "`;\n reply: `" + data.Reply + "`"
+	emb, err := ins.Embedding(content, defaultModel)
+	if err != nil {
+		return err
+	}
+	// emb = append(emb, *d)
+
+	if emb == nil {
+		return nil
+	}
+	return ins.SaveChatEmbeddings(emb, data)
+}
+
+func (*GPT) SaveChatEmbeddings(data *EmbedResult, richData *EmbededUpsertData) error {
+	if len(data.Data) == 0 {
+		return errors.New("empty embeddings")
+	}
 	var embReq []map[string]interface{}
-	for index, _ := range data {
-		if len(data[index].Data) > 0 {
-			embReq = append(embReq, map[string]interface{}{
-				"id":     strconv.FormatUint(ids[index].Id, 10),
-				"values": data[index].Data[0].Embedding,
-				"metadata": map[string]string{
-					"user":   strconv.FormatUint(ids[index].UserId, 10),
-					"devid":  ids[index].DevId,
-					"char":   strconv.FormatUint(ids[index].CharId, 10),
-					"direct": ids[index].Direction,
-				},
-			})
-		} else {
-			log.Println("pinecone save why:::", data[index].Data)
-		}
-	}
+	// for index, _ := range data {
+	// 	if len(data[index].Data) > 0 {
+	// 		embReq = append(embReq, map[string]interface{}{
+	// 			"id":     strconv.FormatUint(richData[index].QuestionId, 10) + "-" + strconv.FormatUint(richData[index].ReplyId, 10),
+	// 			"values": data[index].Data[0].Embedding,
+	// 			"metadata": map[string]string{
+	// 				"user":     strconv.FormatUint(richData[index].UserId, 10),
+	// 				"devid":    richData[index].DevId,
+	// 				"charid":   strconv.FormatUint(richData[index].CharId, 10),
+	// 				"charcode": richData[index].CharCode,
+	// 			},
+	// 		})
+	// 	} else {
+	// 		log.Println("pinecone save why:::", data[index].Data)
+	// 	}
+	// }
+
+	embReq = append(embReq, map[string]interface{}{
+		"id":     strconv.FormatUint(richData.QuestionId, 10),
+		"values": data.Data[0].Embedding,
+		"metadata": map[string]string{
+			"user":     strconv.FormatUint(richData.UserId, 10),
+			"devid":    richData.DevId,
+			"charid":   strconv.FormatUint(richData.CharId, 10),
+			"charcode": richData.CharCode,
+		},
+	})
 
 	bytesData, _ := json.Marshal(map[string]interface{}{
 		"vectors": embReq,
@@ -140,24 +172,6 @@ func (*GPT) SaveChatEmbeddings(data []EmbedResult, ids []model.ChatContent) erro
 	log.Println("pinecone upsert:::", string(body))
 
 	return nil
-}
-
-func (ins *GPT) BatchUpsert(data []model.ChatContent) error {
-
-	var emb []EmbedResult
-	for _, v := range data {
-		if len(v.Content) >= 5 {
-			d, err := ins.Embedding(v.Content, defaultModel)
-			if err != nil {
-				return err
-			}
-			emb = append(emb, *d)
-		}
-	}
-	if len(emb) == 0 {
-		return nil
-	}
-	return ins.SaveChatEmbeddings(emb, data)
 }
 
 func (ins *GPT) Query(id string, question string, filter map[string]string, limitation int) ([]EmbedQueryResult, error) {

@@ -56,15 +56,15 @@ func (CharBack) TableName() string {
 }
 
 type ChatContent struct {
-	Id        uint64 `gorm:"AUTO_INCREMENT;PRIMARY_KEY"`
-	Flag      int
-	DevId     string
-	UserId    uint64
-	CharId    uint64
-	Content   string
-	Direction string
-	AddTime   *time.Time
-	CharCode  string
+	Id       uint64 `gorm:"AUTO_INCREMENT;PRIMARY_KEY"`
+	Flag     int
+	DevId    string
+	UserId   uint64
+	CharId   uint64
+	Question string
+	Reply    string
+	AddTime  *time.Time
+	CharCode string
 }
 
 func (ChatContent) TableName() string {
