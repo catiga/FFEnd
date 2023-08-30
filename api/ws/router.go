@@ -248,7 +248,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 			log.Println("判断是否构造结果参数：", request.UserId, v.Metadata["user"], request.DevId, v.Metadata["devid"], v.Score)
 			if v.Metadata["user"] == strconv.FormatUint(request.UserId, 10) || v.Metadata["devid"] == request.DevId {
 				log.Println("准备比对评分", v.Score)
-				if v.Score > float64(0.88) {
+				if v.Score > float64(0.66) {
 					index++
 					idint, err := strconv.ParseUint(v.Id, 10, 64)
 					if err == nil {
