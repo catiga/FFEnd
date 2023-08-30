@@ -230,7 +230,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 
 	gpt := &embedding.GPT{}
 	metaFilter := map[string]string{
-		"char": strconv.FormatUint(chars.Id, 10),
+		"charid": strconv.FormatUint(chars.Id, 10),
 	}
 	if request.UserId > 0 {
 		metaFilter["user"] = strconv.FormatUint(request.UserId, 10)
