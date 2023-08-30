@@ -274,11 +274,13 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 			log.Println("find appendix user data:", len(result_1), ids)
 			for _, v := range result_1 {
 				if v.Direction == "1" {
+					log.Println("rebuild: user--" + v.Content)
 					result = append(result, model.CharBack{
 						Role:   "user",
 						Prompt: v.Content,
 					})
 				} else if v.Direction == "2" {
+					log.Println("rebuild: aier--" + v.Content)
 					result = append(result, model.CharBack{
 						Role:   "assistant",
 						Prompt: v.Content,
