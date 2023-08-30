@@ -245,6 +245,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		metaFilter["devid"] = request.DevId
 	}
 	embResults, err := gpt.Query("", question, metaFilter, 500)
+	log.Println("查找向量数据条件，结果：", metaFilter, len(embResults))
 	if err == nil && len(embResults) > 0 {
 		var ids []uint64
 		for _, v := range embResults {
