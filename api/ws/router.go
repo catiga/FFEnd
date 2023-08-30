@@ -239,11 +239,11 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		metaFilter["devid"] = request.DevId
 	}
 	embResults, err := gpt.Query("", question, metaFilter, 500)
-	log.Println("查找向量数据条件，结果：", metaFilter, len(embResults))
+	log.Println("查找向量数据条件，结果：", metaFilter, len(embResults), embResults)
 	if err == nil && len(embResults) > 0 {
 		var ids []uint64
 		for _, v := range embResults {
-			log.Println(v.Id, v.Metadata)
+			log.Println("这里对查询结果进行循环", v.Id, v.Metadata)
 			index := 0
 			if v.Metadata["user"] == strconv.FormatUint(request.UserId, 10) || v.Metadata["devid"] == request.DevId {
 				if v.Score > float64(0.88) {

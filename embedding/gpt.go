@@ -147,7 +147,7 @@ func (*GPT) SaveChatEmbeddings(data *EmbedResult, richData *EmbededUpsertData) e
 		},
 	}
 	embReq = append(embReq, embDa)
-	log.Println("build pinecone upsertdata:", len(embReq), embDa)
+	log.Println("build pinecone upsertdata:", len(embReq))
 
 	bytesData, _ := json.Marshal(map[string]interface{}{
 		"vectors":   embReq,
