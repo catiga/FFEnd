@@ -239,6 +239,8 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		metaFilter["devid"] = request.DevId
 	}
 	embResults, err := gpt.Query("", question, metaFilter, 500)
+
+	backgroundContext := ""
 	if err == nil && len(embResults) > 0 {
 		var ids []uint64
 		for _, v := range embResults {
@@ -262,17 +264,20 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		db.Where("id IN (?)", ids).Order("add_time desc").Find(&result_1)
 
 		if len(result_1) > 0 { // here is related chat history data
-			log.Println("find appendix user data:", len(result_1), ids)
+			log.Println("find appendix user data:", len(result_1), ids, " and start to build question background")
+			// for _, v := range result_1 {
+			// 	log.Println(v.Question, "---", v.Reply)
+			// 	result = append(result, model.CharBack{
+			// 		Role:   "user",
+			// 		Prompt: v.Question,
+			// 	})
+			// 	result = append(result, model.CharBack{
+			// 		Role:   "assistant",
+			// 		Prompt: v.Reply,
+			// 	})
+			// }
 			for _, v := range result_1 {
-				log.Println(v.Question, "---", v.Reply)
-				result = append(result, model.CharBack{
-					Role:   "user",
-					Prompt: v.Question,
-				})
-				result = append(result, model.CharBack{
-					Role:   "assistant",
-					Prompt: v.Reply,
-				})
+				backgroundContext += ("question:`" + v.Question + "`; answer:`" + v.Reply + "` \n")
 			}
 		}
 	}
@@ -300,9 +305,13 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 			}
 		}
 	}
+	if len(backgroundContext) > 0 {
+		backgroundContext = "Context: \n" + backgroundContext + "\n"
+	}
+	log.Println("Question with Context:", backgroundContext+question)
 	back = append(back, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleUser,
-		Content: question,
+		Content: backgroundContext + question,
 	})
 	return back
 }
