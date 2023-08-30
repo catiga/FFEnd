@@ -139,19 +139,19 @@ func (*GPT) SaveChatEmbeddings(data *EmbedResult, richData *EmbededUpsertData) e
 		"id":     strconv.FormatUint(richData.QuestionId, 10),
 		"values": data.Data[0].Embedding,
 		"metadata": map[string]string{
-			"user":      strconv.FormatUint(richData.UserId, 10),
-			"devid":     richData.DevId,
-			"charid":    strconv.FormatUint(richData.CharId, 10),
-			"charcode":  richData.CharCode,
-			"version":   "2.0",
-			"namespace": "spw-2.0",
+			"user":     strconv.FormatUint(richData.UserId, 10),
+			"devid":    richData.DevId,
+			"charid":   strconv.FormatUint(richData.CharId, 10),
+			"charcode": richData.CharCode,
+			"version":  "2.0",
 		},
 	}
 	embReq = append(embReq, embDa)
 	log.Println("build pinecone upsertdata:", len(embReq), embDa)
 
 	bytesData, _ := json.Marshal(map[string]interface{}{
-		"vectors": embReq,
+		"vectors":   embReq,
+		"namespace": "spwvec",
 	})
 
 	payload := strings.NewReader(string(bytesData))
@@ -189,13 +189,14 @@ func (ins *GPT) Query(id string, question string, filter map[string]string, limi
 		"filter":          filter,
 		"topK":            limitation,
 		"includeMetadata": true,
+		"includeValues":   false,
+		"namespace":       "spwvec",
 	}
 	if len(id) > 0 {
 		queryCond["id"] = id
 	}
 
 	queryCond["vector"] = r.Data[0].Embedding
-	queryCond["includeValues"] = false
 
 	jsonCond, _ := json.Marshal(queryCond)
 
