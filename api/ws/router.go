@@ -267,7 +267,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		var result_1 []model.ChatContent
 		// db.Model(&model.ChatContent{}).Where("id IN ?", ids).Order("seq asc").Find(&result_1)
 		// err := db.Find(&result_1, ids).Error
-		err := db.Where("id IN (?)", ids).Order("seq asc").Find(&result_1)
+		err := db.Where("id IN (?)", ids).Order("add_time desc").Find(&result_1)
 
 		log.Println("查询聊天历史：", err, ids)
 		if len(result_1) > 0 { // here is related chat history data
