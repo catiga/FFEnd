@@ -101,7 +101,7 @@ func (ins *GPT) BatchUpsert(data *EmbededUpsertData) error {
 
 	content := "question:`" + data.Question + "`;\n reply: `" + data.Reply + "`"
 	emb, err := ins.Embedding(content, defaultModel)
-	log.Println("build gpt embedding:", content, emb, err)
+	log.Println("build gpt embedding:", content, err)
 	if err != nil {
 		return err
 	}
