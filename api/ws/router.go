@@ -239,15 +239,11 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		metaFilter["devid"] = request.DevId
 	}
 	embResults, err := gpt.Query("", question, metaFilter, 500)
-	log.Println("查找向量数据条件，结果：", metaFilter, len(embResults), embResults)
 	if err == nil && len(embResults) > 0 {
 		var ids []uint64
 		for _, v := range embResults {
-			log.Println("这里对查询结果进行循环", v.Id, v.Metadata)
 			index := 0
-			log.Println("判断是否构造结果参数：", request.UserId, v.Metadata["user"], request.DevId, v.Metadata["devid"], v.Score)
 			if v.Metadata["user"] == strconv.FormatUint(request.UserId, 10) || v.Metadata["devid"] == request.DevId {
-				log.Println("准备比对评分", v.Score)
 				if v.Score > float64(0.66) {
 					index++
 					idint, err := strconv.ParseUint(v.Id, 10, 64)
@@ -263,12 +259,12 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		var result_1 []model.ChatContent
 		// db.Model(&model.ChatContent{}).Where("id IN ?", ids).Order("seq asc").Find(&result_1)
 		// err := db.Find(&result_1, ids).Error
-		err := db.Where("id IN (?)", ids).Order("add_time desc").Find(&result_1)
+		db.Where("id IN (?)", ids).Order("add_time desc").Find(&result_1)
 
-		log.Println("查询聊天历史：", err, ids)
 		if len(result_1) > 0 { // here is related chat history data
 			log.Println("find appendix user data:", len(result_1), ids)
 			for _, v := range result_1 {
+				log.Println(v.Question, "---", v.Reply)
 				result = append(result, model.CharBack{
 					Role:   "user",
 					Prompt: v.Question,
