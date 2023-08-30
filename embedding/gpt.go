@@ -101,6 +101,7 @@ func (ins *GPT) BatchUpsert(data *EmbededUpsertData) error {
 
 	content := "question:`" + data.Question + "`;\n reply: `" + data.Reply + "`"
 	emb, err := ins.Embedding(content, defaultModel)
+	log.Println("build gpt embedding:", content, emb, err)
 	if err != nil {
 		return err
 	}
@@ -145,6 +146,7 @@ func (*GPT) SaveChatEmbeddings(data *EmbedResult, richData *EmbededUpsertData) e
 			"version":  "2.0",
 		},
 	})
+	log.Println("build pinecone upsertdata:", len(embReq))
 
 	bytesData, _ := json.Marshal(map[string]interface{}{
 		"vectors": embReq,
