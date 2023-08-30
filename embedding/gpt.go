@@ -135,18 +135,20 @@ func (*GPT) SaveChatEmbeddings(data *EmbedResult, richData *EmbededUpsertData) e
 	// 	}
 	// }
 
-	embReq = append(embReq, map[string]interface{}{
+	embDa := map[string]interface{}{
 		"id":     strconv.FormatUint(richData.QuestionId, 10),
 		"values": data.Data[0].Embedding,
 		"metadata": map[string]string{
-			"user":     strconv.FormatUint(richData.UserId, 10),
-			"devid":    richData.DevId,
-			"charid":   strconv.FormatUint(richData.CharId, 10),
-			"charcode": richData.CharCode,
-			"version":  "2.0",
+			"user":      strconv.FormatUint(richData.UserId, 10),
+			"devid":     richData.DevId,
+			"charid":    strconv.FormatUint(richData.CharId, 10),
+			"charcode":  richData.CharCode,
+			"version":   "2.0",
+			"namespace": "spw-2.0",
 		},
-	})
-	log.Println("build pinecone upsertdata:", len(embReq))
+	}
+	embReq = append(embReq, embDa)
+	log.Println("build pinecone upsertdata:", len(embReq), embDa)
 
 	bytesData, _ := json.Marshal(map[string]interface{}{
 		"vectors": embReq,
