@@ -146,13 +146,17 @@ func (ins *GPT) BatchUpsert(data []model.ChatContent) error {
 
 	var emb []EmbedResult
 	for _, v := range data {
-		d, err := ins.Embedding(v.Content, defaultModel)
-		if err != nil {
-			return err
+		if len(v.Content) >= 5 {
+			d, err := ins.Embedding(v.Content, defaultModel)
+			if err != nil {
+				return err
+			}
+			emb = append(emb, *d)
 		}
-		emb = append(emb, *d)
 	}
-
+	if len(emb) == 0 {
+		return nil
+	}
 	return ins.SaveChatEmbeddings(emb, data)
 }
 

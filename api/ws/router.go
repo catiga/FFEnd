@@ -235,10 +235,16 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 	db.Model(&model.CharBack{}).Where("code = ? and lan = ? and flag = ?", chars.Code, chars.Lan, 0).Order("seq asc").Find(&result)
 
 	gpt := &embedding.GPT{}
-	embResults, err := gpt.Query("", question, map[string]string{
-		"user":  strconv.FormatUint(request.UserId, 10),
-		"devid": request.DevId,
-	}, 500)
+	metaFilter := map[string]string{
+		"char": strconv.FormatUint(chars.Id, 10),
+	}
+	if request.UserId > 0 {
+		metaFilter["user"] = strconv.FormatUint(request.UserId, 10)
+	}
+	if len(request.DevId) > 0 {
+		metaFilter["devid"] = request.DevId
+	}
+	embResults, err := gpt.Query("", question, metaFilter, 500)
 	if err == nil && len(embResults) > 0 {
 		var ids []uint64
 		for _, v := range embResults {
@@ -264,10 +270,17 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		if len(result_1) > 0 { // here is related chat history data
 			log.Println("find appendix user data:", len(result_1))
 			for _, v := range result_1 {
-				result = append(result, model.CharBack{
-					Role:   "user",
-					Prompt: v.Content,
-				})
+				if v.Direction == "1" {
+					result = append(result, model.CharBack{
+						Role:   "user",
+						Prompt: v.Content,
+					})
+				} else if v.Direction == "2" {
+					result = append(result, model.CharBack{
+						Role:   "assistant",
+						Prompt: v.Content,
+					})
+				}
 			}
 		}
 	}
