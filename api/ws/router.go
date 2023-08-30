@@ -245,6 +245,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		for _, v := range embResults {
 			log.Println("这里对查询结果进行循环", v.Id, v.Metadata)
 			index := 0
+			log.Println("判断是否构造结果参数：", request.UserId, v.Metadata["user"], request.DevId, v.Metadata["devid"])
 			if v.Metadata["user"] == strconv.FormatUint(request.UserId, 10) || v.Metadata["devid"] == request.DevId {
 				if v.Score > float64(0.88) {
 					index++
