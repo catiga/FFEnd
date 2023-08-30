@@ -142,6 +142,7 @@ func (*GPT) SaveChatEmbeddings(data *EmbedResult, richData *EmbededUpsertData) e
 			"devid":    richData.DevId,
 			"charid":   strconv.FormatUint(richData.CharId, 10),
 			"charcode": richData.CharCode,
+			"version":  "2.0",
 		},
 	})
 
@@ -179,6 +180,7 @@ func (ins *GPT) Query(id string, question string, filter map[string]string, limi
 	if err != nil {
 		return nil, err
 	}
+	filter["version"] = "2.0" //固定查询
 	queryCond := map[string]interface{}{
 		"filter":          filter,
 		"topK":            limitation,
