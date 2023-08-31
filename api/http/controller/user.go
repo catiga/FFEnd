@@ -164,3 +164,34 @@ func ChatHistory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, res)
 }
+
+func ChatSample(c *gin.Context) {
+	res := common.Response{}
+
+	// devId := c.Request.Header.Get("Devid")
+	charCode := c.PostForm("code")
+	lan := c.PostForm("lan")
+
+	var result []model.SampleChat
+	db := database.GetDb()
+
+	db.Model(&model.SampleChat{}).Where("code = ? and lan = ? and flag != ?", charCode, lan, -1).Find(&result)
+
+	var data []map[string]interface{}
+
+	for _, v := range result {
+		data = append(data, map[string]interface{}{
+			"code":   v.Code,
+			"lan":    v.Lan,
+			"Q":      v.Samq,
+			"A":      v.Sama,
+			"charid": v.CharId,
+		})
+	}
+
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	res.Data = data
+
+	c.JSON(http.StatusOK, res)
+}

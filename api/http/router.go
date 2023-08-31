@@ -21,4 +21,5 @@ func Routers(e *gin.RouterGroup) {
 	userGroup.GET("character", controller.Characters)
 	userGroup.POST("character", controller.CharacterWithCode)
 	userGroup.POST("chat/history", controller.ChatHistory)
+	userGroup.POST("samplechat", controller.ChatSample)
 }

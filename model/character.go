@@ -70,3 +70,15 @@ type ChatContent struct {
 func (ChatContent) TableName() string {
 	return "spw_chat"
 }
+
+type SampleChat struct {
+	BaseModel
+	CharId  uint64
+	Samq    string
+	Sama    string
+	AddTime *time.Time
+}
+
+func (SampleChat) TableName() string {
+	return "spw_sample_chat"
+}
