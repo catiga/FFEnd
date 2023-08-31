@@ -169,13 +169,12 @@ func ChatSample(c *gin.Context) {
 	res := common.Response{}
 
 	// devId := c.Request.Header.Get("Devid")
-	charCode := c.PostForm("code")
 	lan := c.PostForm("lan")
 
 	var result []model.SampleChat
 	db := database.GetDb()
 
-	db.Model(&model.SampleChat{}).Where("code = ? and lan = ? and flag != ?", charCode, lan, -1).Find(&result)
+	db.Model(&model.SampleChat{}).Where("lan = ? and flag != ?", lan, -1).Find(&result)
 
 	var data []map[string]interface{}
 
