@@ -170,6 +170,15 @@ func ChatSample(c *gin.Context) {
 
 	// devId := c.Request.Header.Get("Devid")
 	lan := c.PostForm("lan")
+	if len(lan) == 0 {
+		lan = c.Request.Header.Get("lan")
+	}
+	if !tool.IsSupportLan(lan) {
+		res.Code = common.CODE_ERR_LAN
+		res.Msg = "unsupport lan"
+		c.JSON(http.StatusOK, res)
+		return
+	}
 
 	var result []model.SampleChat
 	db := database.GetDb()
