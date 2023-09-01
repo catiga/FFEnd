@@ -251,7 +251,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 					idint, err := strconv.ParseUint(v.Id, 10, 64)
 					if err == nil {
 						ids = append(ids, idint)
-						if index > 10 {
+						if index > 5 {
 							break
 						}
 					}
@@ -259,25 +259,12 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 			}
 		}
 		var result_1 []model.ChatContent
-		// db.Model(&model.ChatContent{}).Where("id IN ?", ids).Order("seq asc").Find(&result_1)
-		// err := db.Find(&result_1, ids).Error
 		db.Where("id IN (?)", ids).Order("add_time desc").Find(&result_1)
 
 		if len(result_1) > 0 { // here is related chat history data
 			log.Println("find appendix user data:", len(result_1), ids, " and start to build question background")
-			// for _, v := range result_1 {
-			// 	log.Println(v.Question, "---", v.Reply)
-			// 	result = append(result, model.CharBack{
-			// 		Role:   "user",
-			// 		Prompt: v.Question,
-			// 	})
-			// 	result = append(result, model.CharBack{
-			// 		Role:   "assistant",
-			// 		Prompt: v.Reply,
-			// 	})
-			// }
 			for _, v := range result_1 {
-				backgroundContext += ("question:`" + v.Question + "`; answer:`" + v.Reply + "` \n")
+				backgroundContext += ("Q:`" + v.Question + "`;A:`" + v.Reply + "` \n")
 			}
 		}
 	}
