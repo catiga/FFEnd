@@ -244,16 +244,14 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 	if err == nil && len(embResults) > 0 {
 		var ids []uint64
 		for _, v := range embResults {
-			index := 0
 			if v.Metadata["user"] == strconv.FormatUint(request.UserId, 10) || v.Metadata["devid"] == request.DevId {
 				if v.Score > float64(0.66) {
-					index++
+					if len(ids) > 5 {
+						break
+					}
 					idint, err := strconv.ParseUint(v.Id, 10, 64)
 					if err == nil {
 						ids = append(ids, idint)
-						if index > 5 {
-							break
-						}
 					}
 				}
 			}
