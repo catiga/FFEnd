@@ -165,10 +165,8 @@ func ChatHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-func ChatSample(c *gin.Context) {
+func ChatSamples(c *gin.Context) {
 	res := common.Response{}
-
-	// devId := c.Request.Header.Get("Devid")
 	lan := c.PostForm("lan")
 	if len(lan) == 0 {
 		lan = c.Request.Header.Get("lan")
@@ -194,12 +192,54 @@ func ChatSample(c *gin.Context) {
 			"Q":      v.Samq,
 			"A":      v.Sama,
 			"charid": v.CharId,
+			"id":     v.Id,
 		})
 	}
 
 	res.Code = common.CODE_SUCCESS
 	res.Msg = "success"
 	res.Data = data
+
+	c.JSON(http.StatusOK, res)
+}
+
+func ChatSampleById(c *gin.Context) {
+	res := common.Response{}
+	lan := c.PostForm("lan")
+	if len(lan) == 0 {
+		lan = c.Request.Header.Get("lan")
+	}
+	if !tool.IsSupportLan(lan) {
+		res.Code = common.CODE_ERR_LAN
+		res.Msg = "unsupport lan"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	idStr := c.PostForm("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil || id == 0 {
+		res.Code = common.CODE_SUCCESS
+		res.Msg = "id not found"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	var result model.SampleChat
+	db := database.GetDb()
+
+	db.Model(&model.SampleChat{}).Where("id = ? and flag != ?", id, -1).Find(&result)
+
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	res.Data = map[string]interface{}{
+		"code":   result.Code,
+		"lan":    result.Lan,
+		"Q":      result.Samq,
+		"A":      result.Sama,
+		"charid": result.CharId,
+		"id":     result.Id,
+	}
 
 	c.JSON(http.StatusOK, res)
 }
