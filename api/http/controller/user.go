@@ -25,9 +25,55 @@ func Characters(c *gin.Context) {
 		return
 	}
 
-	var result []model.Character
+	catCode := c.PostForm("cat")
+	methodCode := c.PostForm("meth")
+
 	db := database.GetDb()
-	err := db.Model(&model.Character{}).Where("lan = ?", lan).Find(&result).Error
+
+	filter := false
+	var ids []uint64
+	if len(catCode) > 0 {
+		filter = true
+		err := db.Model(&model.CharacterPos{}).Select("char_id").Where("type_cat = ? and type_code = ? and type_lan = ? and flag != ?", "100", catCode, lan, -1).Find(&ids).Error
+		if err != nil {
+			log.Println("find cats error:", err)
+		}
+	}
+	if len(methodCode) > 0 {
+		filter = true
+		var tmpids []uint64
+		err := db.Model(&model.CharacterPos{}).Select("char_id").Where("type_cat = ? and type_code = ? and type_lan = ? and flag != ?", "200", catCode, lan, -1).Find(&tmpids).Error
+		if err != nil {
+			log.Println("find methods error:", err)
+		}
+		for _, v := range tmpids {
+			isIn := false
+			for _, w := range ids {
+				if v == w {
+					isIn = true
+					break
+				}
+			}
+			if !isIn {
+				ids = append(ids, v)
+			}
+		}
+	}
+
+	var params []interface{}
+	sql := "lan = ? and flag != ?"
+	params = append(params, lan)
+	params = append(params, -1)
+
+	if filter {
+		sql = sql + " and char_id IN (?)"
+		params = append(params, ids[:])
+	}
+
+	var result []model.Character
+
+	// err := db.Model(&model.Character{}).Where("lan = ?", lan).Find(&result).Error
+	err := db.Model(&model.Character{}).Where(sql, params[:]).Find(&result).Error
 	log.Println(err)
 
 	var data []map[string]interface{}
