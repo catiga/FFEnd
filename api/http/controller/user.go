@@ -67,7 +67,7 @@ func Characters(c *gin.Context) {
 
 	if filter {
 		sql = sql + " and id IN (?)"
-		params = append(params, ids[:])
+		params = append(params, ids)
 	}
 
 	var result []model.Character
