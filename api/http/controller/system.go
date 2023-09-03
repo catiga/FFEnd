@@ -69,11 +69,12 @@ func SystemCatalogs(c *gin.Context) {
 	var result []model.Catalog
 	db := database.GetDb()
 
-	if pid == 0 {
-		db.Model(&model.Catalog{}).Where("lan = ? and flag != ?", lan, -1).Order("seq asc").Find(&result)
-	} else if pid > 0 {
-		db.Model(&model.Catalog{}).Where("lan = ? and flag != ? and parent = ?", lan, -1, pid).Order("seq asc").Find(&result)
-	}
+	// if pid == 0 {
+	// 	db.Model(&model.Catalog{}).Where("lan = ? and flag != ? and parent = ?", lan, -1, pid).Order("seq asc").Find(&result)
+	// } else if pid > 0 {
+	// 	db.Model(&model.Catalog{}).Where("lan = ? and flag != ? and parent = ?", lan, -1, pid).Order("seq asc").Find(&result)
+	// }
+	db.Model(&model.Catalog{}).Where("lan = ? and flag != ? and parent = ?", lan, -1, pid).Order("seq asc").Find(&result)
 
 	var data []map[string]interface{}
 
