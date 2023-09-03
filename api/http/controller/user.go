@@ -34,32 +34,28 @@ func Characters(c *gin.Context) {
 	var ids []uint64
 	if len(catCode) > 0 {
 		filter = true
-		var tmpObjs []model.CharacterPos
-		err := db.Model(&model.CharacterPos{}).Where("type_cat = ? and type_code = ? and type_lan = ? and flag != ?", "100", catCode, lan, -1).Find(&tmpObjs).Error
+		err := db.Model(&model.CharacterPos{}).Where("type_cat = ? and type_code = ? and type_lan = ? and flag != ?", "100", catCode, lan, -1).Find(&ids).Error
 		if err != nil {
 			log.Println("find cats error:", err)
-		}
-		for _, v := range tmpObjs {
-			ids = append(ids, v.CharId)
 		}
 	}
 	if len(methodCode) > 0 {
 		filter = true
-		var tmpObjs []model.CharacterPos
-		err := db.Model(&model.CharacterPos{}).Where("type_cat = ? and type_code = ? and type_lan = ? and flag != ?", "200", catCode, lan, -1).Find(&tmpObjs).Error
+		var tmpids []uint64
+		err := db.Model(&model.CharacterPos{}).Select("char_id").Where("type_cat = ? and type_code = ? and type_lan = ? and flag != ?", "200", catCode, lan, -1).Find(&tmpids).Error
 		if err != nil {
 			log.Println("find methods error:", err)
 		}
-		for _, v := range tmpObjs {
+		for _, v := range tmpids {
 			isIn := false
 			for _, w := range ids {
-				if v.CharId == w {
+				if v == w {
 					isIn = true
 					break
 				}
 			}
 			if !isIn {
-				ids = append(ids, v.CharId)
+				ids = append(ids, v)
 			}
 		}
 	}
@@ -70,7 +66,7 @@ func Characters(c *gin.Context) {
 	params = append(params, -1)
 
 	if filter {
-		sql = sql + " and char_id IN (?)"
+		sql = sql + " and id IN (?)"
 		params = append(params, ids[:])
 	}
 
