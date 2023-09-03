@@ -25,7 +25,8 @@ func Characters(c *gin.Context) {
 		return
 	}
 
-	catCode := c.PostForm("cat")
+	catCode := c.PostForm("cv")
+	catType := c.PostForm("ct")
 	methodCode := c.PostForm("meth")
 
 	db := database.GetDb()
@@ -34,7 +35,18 @@ func Characters(c *gin.Context) {
 	var ids []uint64
 	if len(catCode) > 0 {
 		filter = true
-		err := db.Model(&model.CharacterPos{}).Where("type_cat = ? and type_code = ? and type_lan = ? and flag != ?", "100", catCode, lan, -1).Find(&ids).Error
+		sql := "type_lan = ? and flag != ? and type_cat = ?"
+		var params []interface{}
+		params = append(params, lan)
+		params = append(params, -1)
+		params = append(params, "100")
+		params = append(params, catCode)
+		if catType == "1" { // first level
+			sql = sql + " and type_code = ?"
+		} else {
+			sql = sql + " and parent_code = ?"
+		}
+		err := db.Model(&model.CharacterPos{}).Where(sql, params...).Find(&ids).Error
 		if err != nil {
 			log.Println("find cats error:", err)
 		}

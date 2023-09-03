@@ -22,12 +22,13 @@ func (Catalog) TableName() string {
 }
 
 type CharacterPos struct {
-	Id       uint64 `gorm:"AUTO_INCREMENT;PRIMARY_KEY"`
-	CharId   uint64
-	TypeLan  string
-	TypeCode string
-	TypeCat  string
-	Flag     int
+	Id         uint64 `gorm:"AUTO_INCREMENT;PRIMARY_KEY"`
+	CharId     uint64
+	TypeLan    string
+	TypeCode   string
+	ParentCode string
+	TypeCat    string
+	Flag       int
 }
 
 func (CharacterPos) TableName() string {
