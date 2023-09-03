@@ -46,7 +46,7 @@ func Characters(c *gin.Context) {
 		} else {
 			sql = sql + " and parent_code = ?"
 		}
-		err := db.Model(&model.CharacterPos{}).Where(sql, params...).Find(&ids).Error
+		err := db.Model(&model.CharacterPos{}).Select("char_id").Where(sql, params...).Find(&ids).Error
 		if err != nil {
 			log.Println("find cats error:", err)
 		}
