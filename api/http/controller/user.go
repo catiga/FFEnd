@@ -73,7 +73,7 @@ func Characters(c *gin.Context) {
 	var result []model.Character
 
 	// err := db.Model(&model.Character{}).Where("lan = ?", lan).Find(&result).Error
-	err := db.Model(&model.Character{}).Where(sql, params).Find(&result).Error
+	err := db.Model(&model.Character{}).Where(sql, params[:]).Find(&result).Error
 	if err != nil {
 		log.Println("find filter result error: ", err)
 	}
