@@ -23,4 +23,8 @@ func Routers(e *gin.RouterGroup) {
 	userGroup.POST("chat/history", controller.ChatHistory)
 	userGroup.POST("samplechats", controller.ChatSamples)
 	userGroup.POST("samplechat", controller.ChatSampleById)
+
+	sysGroup := e.Group("/sys")
+	sysGroup.POST("artags", controller.SystemMethods)
+	sysGroup.POST("catags", controller.SystemCatalogs)
 }
