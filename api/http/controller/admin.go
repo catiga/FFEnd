@@ -310,7 +310,7 @@ func CatalogList(c *gin.Context) {
 	pidStr := c.PostForm("pid")
 	pid, _ := strconv.ParseUint(pidStr, 10, 64)
 
-	data := []model.Catalog{}
+	var data []model.Catalog
 	db := database.GetDb()
 
 	db.Model(&model.Catalog{}).Where("lan = ? and flag != ? and parent = ?", lan, -1, pid).Find(&data)
