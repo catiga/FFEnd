@@ -294,3 +294,110 @@ func CharacterAdd(c *gin.Context) {
 	res.Msg = "success"
 	c.JSON(http.StatusOK, res)
 }
+
+func CatalogList(c *gin.Context) {
+	res := common.Response{}
+
+	lan := c.PostForm("lan")
+
+	if lan != "zh-CN" && lan != "en" {
+		res.Code = common.CODE_ERR_CHAR_BASPARAM
+		res.Msg = "Basic params error"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	pidStr := c.PostForm("pid")
+	pid, _ := strconv.ParseUint(pidStr, 10, 64)
+
+	data := model.Catalog{}
+	db := database.GetDb()
+
+	db.Model(&model.Catalog{}).Where("lan = ? and flag != ? and parent = ?", lan, -1, pid).Find(&data)
+
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	res.Data = data
+	c.JSON(http.StatusOK, res)
+}
+
+func CatalogAdd(c *gin.Context) {
+	res := common.Response{}
+
+	lan := c.PostForm("lan")
+
+	if lan != "zh-CN" && lan != "en" {
+		res.Code = common.CODE_ERR_CHAR_BASPARAM
+		res.Msg = "Basic params error"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	code := c.PostForm("code")
+	name := c.PostForm("name")
+
+	pidStr := c.PostForm("pid")
+	pid, _ := strconv.ParseUint(pidStr, 10, 64)
+
+	idStr := c.PostForm("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		res.Code = common.CODE_ERR_PARAM
+		res.Msg = "id invalid"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	db := database.GetDb()
+	var data model.Catalog
+	db.Model(&model.Catalog{}).Where("id = ?", id).Last(&data)
+
+	update := false
+	if data.Id > 0 {
+		update = true
+	}
+
+	data.Lan = lan
+	data.Code = code
+	data.Name = name
+	data.Seq = 5
+	data.Flag = 0
+	data.Parent = pid
+	if update {
+		db.Model(&model.Catalog{}).Updates(&data)
+	} else {
+		db.Model(&model.Catalog{}).Create(&data)
+	}
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	c.JSON(http.StatusOK, res)
+}
+
+func CatalogDel(c *gin.Context) {
+	res := common.Response{}
+
+	idStr := c.PostForm("id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		res.Code = common.CODE_ERR_PARAM
+		res.Msg = "id invalid"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	db := database.GetDb()
+	var data model.Catalog
+	db.Model(&model.Catalog{}).Where("id = ?", id).Last(&data)
+
+	if data.Id == 0 {
+		res.Code = common.CODE_ERR_NOTFOUND
+		res.Msg = "catalog not found"
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	db.Model(&model.Catalog{}).Where("id = ?", id).Update("flag", -1)
+	res.Code = common.CODE_SUCCESS
+	res.Msg = "success"
+	c.JSON(http.StatusOK, res)
+}
