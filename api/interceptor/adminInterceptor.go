@@ -1,19 +1,63 @@
 package interceptor
 
 import (
+	"log"
+	"net/http"
+	"time"
+
+	"spw/api/common"
+	"spw/model"
+	database "spw/system"
+
 	"github.com/gin-gonic/gin"
 )
 
-var exception = []string{""}
-
 // http 请求拦截器
-func HttpInterceptor() gin.HandlerFunc {
+func CheckAdmin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// signMap, _ := getSignParam(c, c.Request)
+		path := c.Request.URL.Path
+		if path == "/spwapi/admin/login" || path == "/spwapi/admin/sts" {
+			c.Next()
+		} else {
+			log.Println(path)
 
-		// fmt.Sprintln("签名参数:      ", signMap)
-		c.Next()
+			token := c.Request.Header.Get("Auth-Token")
+
+			verifyResult := validateToken(token)
+			if !verifyResult {
+				c.Abort()
+				c.JSON(http.StatusOK, common.Response{
+					Code:      common.CODE_ERR_ADMINTOKEN,
+					Msg:       "token invalid",
+					Timestamp: time.Now().Unix(),
+				})
+				return
+			}
+			c.Next()
+		}
 	}
+}
+
+func validateToken(token string) bool {
+	if len(token) == 0 {
+		return false
+	}
+	db := database.GetDb()
+
+	var result []model.AdminToken
+	db.Model(&model.AdminToken{}).Where("token = ? and flag != ?", token, -1).Find(&result)
+
+	ver := false
+	for _, v := range result {
+		if v.ExpireTime.After(time.Now()) {
+			ver = true
+		} else {
+			err := db.Model(&model.AdminToken{}).Where("id = ?", v.Id).Update("flag", -1)
+			log.Println(err)
+		}
+	}
+
+	return ver
 }
 
 // func getSignParam(c *gin.Context, request *http.Request) (map[string]string, bool) {

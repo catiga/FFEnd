@@ -38,7 +38,7 @@ func Init() *gin.Engine {
 
 	// r.LoadHTMLGlob(staticTplPath)
 
-	apiGroup := r.Group("/spwapi", interceptor.HttpInterceptor())
+	apiGroup := r.Group("/spwapi", interceptor.HttpInterceptor()) // total interceptor stack
 	for _, opt := range options {
 		opt(apiGroup)
 	}

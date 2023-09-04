@@ -4,10 +4,12 @@ import (
 	"spw/api/http/controller"
 
 	"github.com/gin-gonic/gin"
+
+	"spw/api/interceptor"
 )
 
 func Routers(e *gin.RouterGroup) {
-	adminGroup := e.Group("/admin")
+	adminGroup := e.Group("/admin", interceptor.CheckAdmin())
 	adminGroup.POST("login", controller.Login)
 	adminGroup.GET("characters", controller.CharacterList)
 	adminGroup.GET("methods", controller.MethodList)
