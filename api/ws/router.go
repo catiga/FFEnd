@@ -107,7 +107,7 @@ func RequestGPT(ws *websocket.Conn, mt int, request common.Request, timeNowHs in
 
 	db := database.GetDb()
 	var character model.Character
-	err := db.Model(&model.Character{}).Where("lan = ? and code = ?", language, ascode).Last(&character).Error
+	err := db.Model(&model.Character{}).Where("lan = ? and code = ? and flag != ?", language, ascode, -1).Last(&character).Error
 
 	if err != nil {
 		log.Println("chat error:", err)
@@ -238,7 +238,7 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 	if len(request.DevId) > 0 {
 		metaFilter["devid"] = request.DevId
 	}
-	embResults, err := gpt.Query("", question, metaFilter, 500)
+	embResults, err := gpt.Query("", question, metaFilter, 3)
 
 	backgroundContext := ""
 	if err == nil && len(embResults) > 0 {
@@ -246,9 +246,9 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		for _, v := range embResults {
 			if v.Metadata["user"] == strconv.FormatUint(request.UserId, 10) || v.Metadata["devid"] == request.DevId {
 				if v.Score > float64(0.66) {
-					if len(ids) > 5 {
-						break
-					}
+					// if len(ids) > 5 {
+					// 	break
+					// }
 					idint, err := strconv.ParseUint(v.Id, 10, 64)
 					if err == nil {
 						ids = append(ids, idint)
@@ -258,6 +258,13 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		}
 		var result_1 []model.ChatContent
 		db.Where("id IN (?)", ids).Order("add_time desc").Find(&result_1)
+
+		//同时取最近的三条聊天记录补充进去
+		result_recent := findRecentChats(3, request.DevId, request.UserId, chars)
+		if len(result_recent) > 0 {
+			log.Println("add new chat content: ", len(result_recent))
+			result_1 = append(result_1, result_recent...)
+		}
 
 		if len(result_1) > 0 { // here is related chat history data
 			log.Println("find appendix user data:", len(result_1), ids, " and start to build question background")
@@ -322,4 +329,37 @@ func makeReply(code int64, msg string, timeHs int64, chatId string, replyTs int6
 			"Content": content,
 		},
 	}
+}
+
+func findRecentChats(count int, dev string, user uint64, character *model.Character) []model.ChatContent {
+	db := database.GetDb()
+
+	var result_recent []model.ChatContent
+	var params []interface{}
+	sql := "char_code = ? and flag != ?"
+	params = append(params, character.Code)
+	params = append(params, -1)
+
+	canFind := false
+	if user > 0 {
+		sql = sql + " and user_id = ?"
+		params = append(params, user)
+		canFind = true
+	} else {
+		if len(dev) > 0 {
+			canFind = true
+			sql = sql + " and dev_id = ?"
+			params = append(params, dev)
+		}
+	}
+
+	if !canFind {
+		return result_recent
+	}
+
+	err := db.Where(sql, params...).Order("add_time desc").Limit(3).Find(&result_recent).Error
+	if err != nil {
+		log.Println("find recent chats error:", err)
+	}
+	return result_recent
 }
