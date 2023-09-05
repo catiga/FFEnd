@@ -274,8 +274,11 @@ func buildPrompt(chars *model.Character, chatType string, request common.Request
 		}
 	}
 
+	log.Println("开始构建角色设定：", len(result))
+
 	if len(result) > 0 {
 		for _, v := range result {
+			log.Println(v.Role, v.Prompt)
 			roleType := ""
 			if v.Role == "system" {
 				roleType = openai.ChatMessageRoleSystem
